@@ -25,6 +25,14 @@ public class Application {
         SpringApplication.run(Application.class, args);
     }
 
+	@Bean
+	@Primary
+	public ObjectMapper jacksonObjectMapper(Jackson2ObjectMapperBuilder builder) {
+		ObjectMapper mapper = builder.createXmlMapper(false).build();
+		mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+		return mapper;
+	}
+
     @Bean
 	public Docket manageUsersApi() {
 		return new Docket(DocumentationType.SWAGGER_2)
