@@ -1,0 +1,9 @@
+# this file can be used to put common properties
+em:
+  app:
+    api-prefix: '/api'
+logging:
+  level:
+    com.bs.em: debug
+    org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod: INFO
+++

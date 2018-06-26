@@ -1,0 +1,125 @@
+buildscript {
+    ext {
+        springBootVersion = '1.5.12.RELEASE'
+    }
+    repositories {
+        mavenCentral()
+        maven {
+            url 'https://plugins.gradle.org/m2/'
+        }
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+    }
+}
+
+configurations {
+    jpametamodel
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'org.springframework.boot'
+
+jar {
+    baseName = 'user-management'
+}
+
+repositories {
+    flatDir name: 'localRepository', dirs: 'lib'
+    mavenCentral()
+    mavenLocal()
+    jcenter()
+}
+
+configure(allprojects) {
+    apply plugin: 'java'
+}
+
+ext {
+}
+
+dependencies {
+    jpametamodel "org.hibernate:hibernate-jpamodelgen"
+
+    compile("org.springframework.boot:spring-boot-starter-web")
+    compile("org.springframework.boot:spring-boot-starter-websocket")
+    compile("org.springframework.boot:spring-boot-starter-data-jpa")
+    //compile("org.springframework.boot:spring-boot-starter-freemarker")
+
+    compile("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.2")
+    compile("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.2")
+    compile 'net.javacrumbs.shedlock:shedlock-spring:0.18.2'
+    compile 'net.javacrumbs.shedlock:shedlock-provider-jdbc:0.18.2'
+    compile 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:0.18.2'
+
+    compile group: 'com.h2database', name: 'h2', version: '1.3.148'
+
+    compile("org.apache.httpcomponents:httpclient:4.5.5")
+    compile("io.springfox:springfox-swagger2:2.8.0")
+    compile("io.springfox:springfox-swagger-ui:2.8.0")
+
+    testCompile('org.springframework.boot:spring-boot-starter-test')
+    // https://mvnrepository.com/artifact/junit/junit
+    testCompile group: 'junit', name: 'junit', version: '4.4'
+
+}
+
+sourceSets {
+    generated {
+        java.srcDir "${buildDir}/generated/src/java/"
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs 'src/generated/java'
+        }
+    }
+    main.java.srcDirs += 'src/main/java'
+    main.java.srcDirs += 'src/main/domain'
+}
+
+sourceSets {
+    generated {
+        java.srcDir "${buildDir}/generated/src/java/"
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs 'src/generated/java'
+        }
+    }
+}
+
+springBoot {
+    executable = true
+}
+
+task generateMetaModel(type: JavaCompile, group: 'build', description: 'metamodel generate') {
+    source = 'src/main/domain'
+    classpath = configurations.compile + configurations.jpametamodel
+    options.compilerArgs = ["-proc:only"]
+    destinationDir = sourceSets.generated.java.srcDirs.iterator().next()
+
+    doFirst {
+        logger.info("Prepare dictionary structures  " + sourceSets.generated.java.srcDirs)
+    }
+}
+
+processResources {
+    filesMatching('config/application.yml') {
+        expand(project.properties)
+    }
+}
+
+compileJava.options.compilerArgs += ["-proc:none"]
+compileJava.dependsOn(processResources)
+compileJava.dependsOn(generateMetaModel)
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.7'
+}
